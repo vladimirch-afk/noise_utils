@@ -126,7 +126,7 @@ class DataPreparator:
 
     def generate_noised_audios(self, input_file, output_file, noisemaker, noise_level=0.2):
         data, files, sr = self.load_files_from_directory(input_file)
-        if not os.path.exists(input_file):
+        if not os.path.exists(output_file):
             os.mkdir(output_file)
         noisy_audios = []
         for audio, file in tqdm(zip(data, files)):
