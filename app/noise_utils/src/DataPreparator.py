@@ -5,59 +5,21 @@ import soundfile as sf
 import os
 import random
 from tqdm import tqdm
-
-
-class Noisemaker:
-    def add_random_noise(self, signal, noise_level=0.002):
-        noise = np.random.normal(scale=noise_level, size=len(signal))
-        noisy_signal = signal + noise
-        max_value = np.max(np.abs(noisy_signal))
-        if max_value > 1.0:
-            noisy_signal /= max_value
-        return noisy_signal, noise
-
-    def add_perlin_noise(self, signal, noise_level=3):
-        noise_f = PerlinNoise()
-        noise = np.array([noise_f(i * signal[i]) * noise_level for i in range(len(signal))])
-        noisy_signal = signal + noise
-        # max_value = np.max(np.abs(noisy_signal))
-        # if max_value > 1.0:
-        #     noisy_signal /= max_value
-        return noisy_signal, noise
-
-
-class SignalGenerator:
-    def generate_linear_signal(self, length, slope=1, intercept=0):
-        x = np.arange(length)
-        signal = slope * x + intercept
-        return signal
-
-    def generate_weakly_nonlinear_signal(self, length, frequency=1, amplitude=5, phase=0, nonlinearity=0.1):
-        t = np.linspace(0, 2 * np.pi * frequency, length)
-        signal = amplitude * (np.sin(t + phase) + nonlinearity * np.sin(2 * t + 2 * phase))
-        return signal
-
-    def generate_nonlinear_signal(self, length, frequency=1, amplitude=5, phase=0):
-        t = np.linspace(0, 2 * np.pi * frequency, length)
-        signal = amplitude * np.sin(t + phase) ** 2
-        return signal
-
-    def generate_linear_signals(self, length, slope=1, intercept=0):
-        x = np.arange(length)
-        signal = slope * x + intercept
-        return signal
-
-    def generate_weakly_nonlinear_signals(self, length, frequency=1, amplitude=1, phase=0, nonlinearity=0.1):
-        t = np.linspace(0, 2 * np.pi * frequency, length)
-        signal = amplitude * (np.sin(t + phase) + nonlinearity * np.sin(2 * t + 2 * phase))
-        return signal
-
+from SignalGenerator import SignalGenerator
 
 class DataPreparator:
     def __init__(self):
         self.generator = SignalGenerator()
 
     def generate_linear_dataset(self, size, length, noisemaker):
+        """
+        Сгенерировать датасет из слабонелинейных сигналов
+
+        size: количество сигналов
+        length: длина сигналов
+        noisemaker: функция для создания шума
+        return: чистые сигналы, искаженные сигналы
+        """
         signals = np.array([])
         distored_signals = np.array([])
         for i in range(size):
@@ -71,6 +33,14 @@ class DataPreparator:
         return distored_signals.reshape(-1, length), signals.reshape(-1, length)
 
     def generate_weakly_nonlinear_dataset(self, size, length, noisemaker):
+        """
+       Сгенерировать датасет из слабонелинейных сигналов
+
+       size: количество сигналов
+       length: длина сигналов
+       noisemaker: функция для создания шума
+       return: чистые сигналы, искаженные сигналы
+       """
         signals = np.array([])
         distored_signals = np.array([])
         for i in range(size):
@@ -83,6 +53,14 @@ class DataPreparator:
         return distored_signals.reshape(-1, length), signals.reshape(-1, length), noise
 
     def generate_nonlinear_dataset(self, size, length, noisemaker):
+        """
+        Сгенерировать датасет из нелинейных сигналов
+
+        size: количество сигналов
+        length: длина сигналов
+        noisemaker: функция для создания шума
+        return: чистые сигналы, искаженные сигналы
+        """
         signals = np.array([])
         distored_signals = np.array([])
         for i in range(size):
@@ -97,6 +75,16 @@ class DataPreparator:
         return distored_signals.reshape(-1, length), signals.reshape(-1, length)
 
     def generate_noised_audio(self, input_file, output_file, noisemaker, noise_level=0.2):
+        """
+        Сгенерировать одно зашумленное аудио
+
+        input_file: имя файла с чистым аудио
+        output_file: имя файла для зашумленного аудио
+        noisemaker: функция для генерации шума
+        noise_level: интенсивность шума
+        return: зашумленный файл (в виде массива чисел),
+                частота дискретизации
+        """
         audio, sr = librosa.load(input_file, sr=None)
         noise = np.random.normal(scale=noise_level, size=len(audio))
         noisy_audio, noise = noisemaker(audio, noise_level)
@@ -107,13 +95,34 @@ class DataPreparator:
         return noisy_audio, sr
 
     def load_file(self, file):
+        """
+        Загрузить аудио
+
+        file: имя файла
+        return: аудио в виде массива чисел, частота дискретизации
+        """
         audio, sr = librosa.load(file)
         return audio, sr
 
     def save_audio(self, audio, output_file, sr):
+        """
+        Сохранить аудио
+
+        audio: аудио в виде массива чисел
+        output_file: имя файла для записи
+        sr: частота дискретизации
+        """
         sf.write(output_file, audio, sr)
 
     def load_files_from_directory(self, directory):
+        """
+        Загрузить аудиофайлы из директории
+
+        directory: директория с файлами
+        return: массив из аудио, каждый из которых представлен в виде массива чисел,
+                массив из названий файлов в директории,
+                частота дискретизации аудиофайла
+        """
         files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(str(directory), str(f)))]
         x = []
         sr = 0
@@ -125,6 +134,17 @@ class DataPreparator:
         return x, files, sr
 
     def generate_noised_audios(self, input_file, output_file, noisemaker, noise_level=0.2):
+        """
+        Сгенерировать зашумленные аудио
+
+        input_file: директория с чистыми аудио
+        output_file: директория для зашумленных аудио
+        noisemaker: функция для генерации шума
+        noise_level: интенсивность шума
+        return: массив из зашумленных аудио, каждый из которых представлен в виде массива чисел,
+                массив из чистых аудио, каждый из которых представлен в виде массива,
+                частота дискретизации аудиофайла
+        """
         data, files, sr = self.load_files_from_directory(input_file)
         if not os.path.exists(output_file):
             os.mkdir(output_file)
@@ -140,6 +160,13 @@ class DataPreparator:
         return noisy_audios, data, sr
 
     def reshape_data(self, data, window_size=1000):
+        """
+        Делит поступающий ввод на части фиксированной длины
+
+        data: двумерный массив
+        window_size: длина частей нового массива
+        return: двумерный массив, где каждый массив длины window_size
+        """
         res = []
         for item in data:
             for i in range(0, len(item) - window_size, window_size):
