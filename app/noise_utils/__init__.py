@@ -1,12 +1,6 @@
-from .src.Noisemaker import (
+from .src.noise_utils import (
     Noisemaker,
-)
-
-from .src.SignalGenerator import (
     SignalGenerator,
-)
-
-from .src.DataPreparator import (
     DataPreparator,
 )
 

@@ -5,7 +5,92 @@ import soundfile as sf
 import os
 import random
 from tqdm import tqdm
-from SignalGenerator import SignalGenerator
+
+
+class Noisemaker:
+    def add_random_noise(self, signal, noise_level=0.002):
+        """
+        Добавить случайный шум
+
+        signal: сигнал (в том числе аудиосигнал) в виде массива чисел
+        noise_level: интенсивность шума
+        return: зашумленный сигнал, прибавленный шум
+        """
+        noise = np.random.normal(scale=noise_level, size=len(signal))
+        noisy_signal = signal + noise
+        max_value = np.max(np.abs(noisy_signal))
+        if max_value > 1.0:
+            noisy_signal /= max_value
+        return noisy_signal, noise
+
+    def add_perlin_noise(self, signal, noise_level=3):
+        """
+        Добавить шум Перлина
+
+        signal: сигнал (в том числе аудиосигнал) в виде массива чисел
+        noise_level: интенсивность шума
+        return: зашумленный сигнал, прибавленный шум
+        """
+        noise_f = PerlinNoise()
+        noise = np.array([noise_f(i * signal[i]) * noise_level for i in range(len(signal))])
+        noisy_signal = signal + noise
+        # max_value = np.max(np.abs(noisy_signal))
+        # if max_value > 1.0:
+        #     noisy_signal /= max_value
+        return noisy_signal, noise
+
+class SignalGenerator:
+    def generate_linear_signal(self, length, slope=1, intercept=0):
+        """
+        Сгенерировать линейный сигнал y = Ax + b
+
+        length: длина сигнала (количество значений)
+        slope: коэффициент A
+        intercept: сдвиг по оси Оу, кофф. b
+        return: массив со значениями сигнала
+        """
+        x = np.arange(length)
+        signal = slope * x + intercept
+        return signal
+
+    def generate_weakly_nonlinear_signal(self, length, frequency=1, amplitude=5, phase=0, nonlinearity=0.1):
+        """
+        Сгенерировать слабонелинейный сигнал
+
+        length: длина сигнала (количество значений)
+        frequency: частота сигнала
+        amplitude: амплитуа сигнала
+        phase: фаза сигнала
+        nonlinearity: коэфф. для нелинейности сигнала
+        return: массив со значениями сигнала
+        """
+        t = np.linspace(0, 2 * np.pi * frequency, length)
+        signal = amplitude * (np.sin(t + phase) + nonlinearity * np.sin(2 * t + 2 * phase))
+        return signal
+
+    def generate_nonlinear_signal(self, length, frequency=1, amplitude=5, phase=0):
+        """
+       Сгенерировать слабонелинейный сигнал
+
+       length: длина сигнала (количество значений)
+       frequency: частота сигнала
+       amplitude: амплитуа сигнала
+       phase: фаза сигнала
+       return: массив со значениями сигнала
+       """
+        t = np.linspace(0, 2 * np.pi * frequency, length)
+        signal = amplitude * np.sin(t + phase) ** 2
+        return signal
+
+    def generate_linear_signals(self, length, slope=1, intercept=0):
+        x = np.arange(length)
+        signal = slope * x + intercept
+        return signal
+
+    def generate_weakly_nonlinear_signals(self, length, frequency=1, amplitude=1, phase=0, nonlinearity=0.1):
+        t = np.linspace(0, 2 * np.pi * frequency, length)
+        signal = amplitude * (np.sin(t + phase) + nonlinearity * np.sin(2 * t + 2 * phase))
+        return signal
 
 class DataPreparator:
     def __init__(self):
@@ -173,3 +258,4 @@ class DataPreparator:
                 chunk = item[i:i + window_size]
                 res.append(chunk)
         return np.array(res)
+
